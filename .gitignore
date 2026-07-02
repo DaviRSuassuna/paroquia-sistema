@@ -2,6 +2,7 @@
 .env
 .env.local
 *.env
+!.env.example
 
 # Frontend (quando existir)
 frontend/node_modules/
