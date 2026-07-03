@@ -1,0 +1,99 @@
+@startuml DiagramaClasses
+
+abstract class DefaultEntity <<MappedSuperclass>> {
+  - id: Long
+  - dataCadastro: LocalDateTime
+  -dataAtualizacao: LocalDateTime
+}
+
+note bottom of DefaultEntity
+  Todas as classes do domínio
+  herdam de DefaultEntity
+end note
+
+enum TipoMissa {
+  COMUM
+  DOMINICAL
+  ESPECIAL
+}
+
+enum Perfil {
+  SUPER_ADMIN
+  ADMIN_PASTORAL
+  COORDENADOR_GRUPO
+  PADRE
+}
+
+class Membro {
+  - nomeCompleto: String
+  - dataNascimento: LocalDate
+  - telefone: String
+  - nomeResponsavel: String
+  - telefoneResponsavel: String
+  - ativo: boolean
+}
+
+class Pastoral {
+  - nome: String
+  - descricao: String
+  - ativo: boolean
+}
+
+class Grupo {
+  - nome: String
+  - descricao: String
+  - ativo: boolean
+}
+
+class Funcao {
+  - nome: String
+  - descricao: String
+  - ativo: boolean
+  - somenteSolene: boolean
+  - tiposMissaPermitidos: Set<TipoMissa>
+}
+
+class Missa {
+  - dataHora: LocalDateTime
+  - tipo: TipoMissa
+  - solene: boolean
+}
+
+class Escala {
+  - presenca: Boolean
+  - duplaFuncao: boolean
+  - dataRegistroPresenca: LocalDateTime
+}
+
+class Usuario {
+  - keycloakId: String
+  - ativo: boolean
+}
+
+class UsuarioPerfil {
+  - perfil: Perfil
+}
+
+Membro "0..*" -- "0..*" Pastoral
+Membro "0..*" -- "0..*" Funcao
+Funcao "0..*" -- "0..*" Pastoral
+
+Grupo "0..*" --> "1" Pastoral
+Membro "0..*" --> "0..1" Grupo
+
+Missa "1" --> "0..*" Escala
+Membro "1" --> "0..*" Escala
+Funcao "1" --> "0..*" Escala
+Usuario "0..1" --> "0..*" Escala : registrou presença
+
+Membro "0..1" -- "0..1" Usuario : vinculado a
+
+Usuario "1" --> "0..*" UsuarioPerfil
+UsuarioPerfil "0..*" --> "0..1" Pastoral : escopo (se Admin Pastoral)
+UsuarioPerfil "0..*" --> "0..1" Grupo : escopo (se Coordenador)
+
+Missa --> TipoMissa
+Funcao --> TipoMissa
+UsuarioPerfil --> Perfil
+
+@enduml
