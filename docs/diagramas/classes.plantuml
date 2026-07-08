@@ -1,4 +1,4 @@
-@startuml DiagramaClasses
+@startuml classes
 
 abstract class DefaultEntity <<MappedSuperclass>> {
   - id: Long
@@ -24,21 +24,11 @@ enum Perfil {
   PADRE
 }
 
-enum ModeloEscala {
-  INDIVIDUAL
-  GRUPO
-}
-
 enum StatusConvocacao {
   PENDENTE
   CONFIRMADO
   EXPIRADO
   INVALIDADO
-}
-
-enum TipoPontuacao {
-  SEM_CAUSA_PLAUSIVEL
-  FALTA_ESCALA_CONFIRMADA
 }
 
 class Membro {
@@ -54,7 +44,6 @@ class Pastoral {
   - nome: String
   - descricao: String
   - ativo: boolean
-  - modeloEscala: ModeloEscala
 }
 
 class Funcao {
@@ -62,6 +51,7 @@ class Funcao {
   - descricao: String
   - ativo: boolean
   - somenteSolene: boolean
+  - permiteReforcoSegundaLeva: boolean
   - tiposMissaPermitidos: Set<TipoMissa>
 }
 
@@ -79,9 +69,6 @@ class Missa {
 }
 
 class Escala {
-  - presenca: Boolean
-  - duplaFuncao: boolean
-  - dataRegistroPresenca: LocalDateTime
 }
 
 class FormularioDisponibilidade {
@@ -106,13 +93,6 @@ class ConvocacaoReforco {
   - dataExpiracao: LocalDateTime
 }
 
-class RegistroPontuacao {
-  - tipo: TipoPontuacao
-  - pontos: int
-  - data: LocalDateTime
-  - motivo: String
-}
-
 class Usuario {
   - keycloakId: String
   - ativo: boolean
@@ -129,7 +109,6 @@ Funcao "0..*" -- "0..*" Pastoral
 Missa "1" --> "0..*" Escala
 Membro "0..1" --> "0..*" Escala
 Funcao "1" --> "0..*" Escala
-Usuario "0..1" --> "0..*" Escala : registrou presença
 
 MissaRecorrente "1" --> "0..*" Missa : gera
 
@@ -141,9 +120,6 @@ Disponibilidade "0..*" -- "0..*" MissaRecorrente : disponível para
 Escala "1" --> "0..*" ConvocacaoReforco : vaga em aberto
 Membro "1" --> "0..*" ConvocacaoReforco : candidato
 
-Membro "1" --> "0..*" RegistroPontuacao
-Pastoral "1" --> "0..*" RegistroPontuacao : escopo
-
 Membro "0..1" -- "0..1" Usuario : vinculado a
 
 Usuario "1" --> "0..*" UsuarioPerfil
@@ -153,8 +129,6 @@ Missa --> TipoMissa
 MissaRecorrente --> TipoMissa
 Funcao --> TipoMissa
 UsuarioPerfil --> Perfil
-Pastoral --> ModeloEscala
 ConvocacaoReforco --> StatusConvocacao
-RegistroPontuacao --> TipoPontuacao
 
 @enduml
