@@ -20,7 +20,6 @@ enum TipoMissa {
 enum Perfil {
   SUPER_ADMIN
   ADMIN_PASTORAL
-  COORDENADOR
   PADRE
 }
 
@@ -38,6 +37,8 @@ class Membro {
   - nomeResponsavel: String
   - telefoneResponsavel: String
   - ativo: boolean
+  - anonimizado: boolean
+  - dataAnonimizacao: LocalDateTime
 }
 
 class Pastoral {
@@ -46,12 +47,16 @@ class Pastoral {
   - ativo: boolean
 }
 
+class ConfiguracaoEscalonamento {
+  - ordemConvocacaoReforco: Integer
+  - intervaloMinutosEscalonamento: Integer
+}
+
 class Funcao {
   - nome: String
   - descricao: String
   - ativo: boolean
   - somenteSolene: boolean
-  - permiteReforcoSegundaLeva: boolean
   - tiposMissaPermitidos: Set<TipoMissa>
 }
 
@@ -66,6 +71,7 @@ class Missa {
   - dataHora: LocalDateTime
   - tipo: TipoMissa
   - solene: boolean
+  - cancelada: boolean
 }
 
 class Escala {
@@ -81,13 +87,12 @@ class FormularioDisponibilidade {
 
 class Disponibilidade {
   - observacoes: String
-  - causaPlausivel: Boolean
-  - interpretacaoGemini: String
 }
 
 class ConvocacaoReforco {
   - token: String
   - status: StatusConvocacao
+  - onda: int
   - dataEnvio: LocalDateTime
   - dataResposta: LocalDateTime
   - dataExpiracao: LocalDateTime
@@ -106,6 +111,9 @@ Membro "0..*" -- "0..*" Pastoral
 Membro "0..*" -- "0..*" Funcao
 Funcao "0..*" -- "0..*" Pastoral
 
+Pastoral "1" --> "0..1" ConfiguracaoEscalonamento
+Pastoral "1" --> "0..*" ConvocacaoReforco : onda de
+
 Missa "1" --> "0..*" Escala
 Membro "0..1" --> "0..*" Escala
 Funcao "1" --> "0..*" Escala
@@ -123,7 +131,7 @@ Membro "1" --> "0..*" ConvocacaoReforco : candidato
 Membro "0..1" -- "0..1" Usuario : vinculado a
 
 Usuario "1" --> "0..*" UsuarioPerfil
-UsuarioPerfil "0..*" --> "0..1" Pastoral : escopo (se Admin Pastoral ou Coordenador)
+UsuarioPerfil "0..*" --> "0..1" Pastoral : escopo (se Admin Pastoral)
 
 Missa --> TipoMissa
 MissaRecorrente --> TipoMissa
