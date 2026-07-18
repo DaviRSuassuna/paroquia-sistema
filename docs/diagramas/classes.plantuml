@@ -39,6 +39,8 @@ class Membro {
   - ativo: boolean
   - anonimizado: boolean
   - dataAnonimizacao: LocalDateTime
+  - motivoAnonimizacao: String
+  - ultimaRespostaDisponibilidade: LocalDateTime
 }
 
 class Pastoral {
@@ -50,7 +52,19 @@ class Pastoral {
 class ConfiguracaoEscalonamento {
   - ordemConvocacaoReforco: Integer
   - intervaloMinutosEscalonamento: Integer
+  - permiteConvocacaoReforco: boolean
+  - diaGeracaoMensal: Integer
 }
+
+class ConfiguracaoSistema {
+  - prazoAntecedenciaReforcoHoras: Integer
+  - prazoLembreteHoras: Integer
+}
+
+note right of ConfiguracaoSistema
+  Instância única (singleton).
+  Configuração global, não por Pastoral.
+end note
 
 class Funcao {
   - nome: String
@@ -86,7 +100,6 @@ class FormularioDisponibilidade {
 }
 
 class Disponibilidade {
-  - observacoes: String
 }
 
 class ConvocacaoReforco {
