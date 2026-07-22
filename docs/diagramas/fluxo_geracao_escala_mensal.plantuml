@@ -1,0 +1,36 @@
+@startuml fluxo_geracao_escala_mensal
+actor "Job Mensal\n(scheduler)" as Job
+participant "Repositorios\n(Formulario, Disponibilidade,\nMissaRecorrente, Missa)" as Repo
+participant "Membro" as Membro
+participant "Escala" as Escala
+participant "Evolution API\n(WhatsApp)" as Whats
+
+activate Job
+Job -> Repo : recupera dados do mês\n(formulário fechado, disponibilidades,\nmissas recorrentes ativas, missas concretas)
+Repo --> Job : dados consolidados
+
+note over Job
+  Para cada vaga (Missa + Funcao exigida):
+end note
+
+loop para cada vaga (Missa + Funcao)
+  Job -> Membro : filtra aptos (Membro-Funcao)\ndisponíveis pra essa MissaRecorrente
+  Membro --> Job : candidatos elegíveis
+
+  Job -> Job : sorteia 1 candidato\n(ou nenhum, se lista vazia)
+  Job -> Escala : cria Escala (Missa + Funcao + Membro)
+
+  note right of Escala
+    Membro = null quando não há
+    candidato disponível → "vaga em aberto"
+  end note
+end
+
+Job -> Whats : notifica cada Membro escalado
+deactivate Job
+
+note over Escala
+  Vagas com Membro = null alimentam
+  o fluxo de convocação de reforço
+end note
+@enduml

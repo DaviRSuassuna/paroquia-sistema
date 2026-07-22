@@ -1,0 +1,48 @@
+@startuml fluxo_convocacao_reforco
+actor "Job de Reforço\n(scheduler)" as Job
+participant "Repositorios\n(Escala, ConfiguracaoSistema,\nPastoral, ConfiguracaoEscalonamento)" as Repo
+participant "Membro" as Membro
+participant "ConvocacaoReforco" as Conv
+participant "Evolution API\n(WhatsApp)" as Whats
+actor "Membro Convocado" as MembroLink
+
+activate Job
+Job -> Repo : detecta vaga em aberto e lê configs\n(prazoAntecedenciaReforcoHoras,\nordem e permiteConvocacaoReforco por Pastoral)
+Repo --> Job : ordem das Pastorais habilitadas\n(ex: Acólitos=1, Coroinhas=2)
+
+note over Job
+  Repete pra cada Pastoral na ordem,
+  até a vaga ser preenchida ou
+  as ondas acabarem
+end note
+
+loop para cada onda (Pastoral seguinte na ordem)
+  Job -> Membro : busca aptos pra Funcao da vaga\nnessa Pastoral
+  Job -> Conv : cria ConvocacaoReforco por apto\n(onda=N, PENDENTE, token único)
+  Job -> Whats : envia mensagem individual (link + token)
+  Whats -> MembroLink : recebe convocação
+
+  alt alguém confirma dentro de intervaloMinutosEscalonamento
+    MembroLink -> Conv : abre link (sem login), clica "Confirmar"
+    Conv -> Conv : atomically primeiro-clique-ganha\ndemais candidatos da onda → INVALIDADO
+    Conv -> Repo : atribui Membro à vaga (Escala)
+    note right of Conv
+      Vaga preenchida — encerra o loop,
+      não avança pra próxima onda
+    end note
+  else ninguém confirma no prazo
+    Conv -> Conv : pendentes da onda → EXPIRADO
+    note right of Conv
+      Vaga segue aberta — avança pra
+      próxima Pastoral na ordem
+    end note
+  end
+end
+
+note over Repo
+  Se todas as ondas se esgotarem
+  sem confirmação, a vaga na Escala
+  permanece vazia
+end note
+deactivate Job
+@enduml
