@@ -30,6 +30,11 @@ enum StatusConvocacao {
   INVALIDADO
 }
 
+enum Complexidade {
+  SIMPLES
+  COMPLEXA
+}
+
 class Membro {
   - nomeCompleto: String
   - dataNascimento: LocalDate
@@ -47,14 +52,45 @@ class Pastoral {
   - nome: String
   - descricao: String
   - ativo: boolean
+  - elegivelLimiteParticipacao: boolean
 }
+
+note right of Pastoral
+  elegivelLimiteParticipacao habilita
+  os campos de limite em
+  ConfiguracaoEscalonamento e a
+  participação no algoritmo de
+  prioridade (RF15.2). Flag explícito,
+  não depende do nome da Pastoral.
+  Hoje só true para Acólitos/Coroinhas.
+end note
 
 class ConfiguracaoEscalonamento {
   - ordemConvocacaoReforco: Integer
   - intervaloMinutosEscalonamento: Integer
   - permiteConvocacaoReforco: boolean
   - diaGeracaoMensal: Integer
+  - prioridadeAtiva: boolean
+  - limiteMissaSemanaComum: Integer
+  - limiteMissaSemanaSolene: Integer
+  - limiteMissaDominicalComum: Integer
+  - limiteMissaDominicalSolene: Integer
 }
+
+note right of ConfiguracaoEscalonamento
+  prioridadeAtiva (default false) só
+  pode ser marcada true se os campos
+  operacionais básicos (ordem, intervalo,
+  dia de geração) já estiverem
+  preenchidos (RF10.2). Enquanto false,
+  o sorteio ignora a prioridade
+  Acólito/Coroinha e os 4 limites.
+  Os 4 campos de limite só têm efeito
+  se Pastoral.elegivelLimiteParticipacao
+  = true. Editáveis exclusivamente pelo
+  Super Admin. NULL = sem teto.
+  Quando preenchidos, devem ser >= 0.
+end note
 
 class ConfiguracaoSistema {
   - prazoAntecedenciaReforcoHoras: Integer
@@ -71,8 +107,22 @@ class Funcao {
   - descricao: String
   - ativo: boolean
   - somenteSolene: boolean
-  - tiposMissaPermitidos: Set<TipoMissa>
+  - complexidade: Complexidade
+  - tipoMinimo: TipoMissa
 }
+
+note right of Funcao
+  Pertence a exatamente uma
+  Pastoral (1:N, obrigatório).
+  tipoMinimo define elegibilidade
+  por hierarquia: COMUM < DOMINICAL
+  < ESPECIAL. Serve em qualquer tipo
+  igual ou acima do próprio degrau.
+  Também define obrigatoriedade
+  (RF15.3) na geração automática.
+  Aptidão cruzada é sempre manual,
+  via Membro-Funcao.
+end note
 
 class MissaRecorrente {
   - diaSemana: DayOfWeek
@@ -87,6 +137,16 @@ class Missa {
   - solene: boolean
   - cancelada: boolean
 }
+
+note right of Missa
+  missaRecorrenteId é opcional apenas
+  quando tipo = ESPECIAL, e sincronizado
+  com MissaRecorrente.tipo via trigger.
+  Marcar solene = true cria vagas para
+  Funcoes somenteSolene (RF17.8).
+  cancelada = true suprime toda
+  automação futura (RF17.9).
+end note
 
 class Escala {
 }
@@ -122,7 +182,7 @@ class UsuarioPerfil {
 
 Membro "0..*" -- "0..*" Pastoral
 Membro "0..*" -- "0..*" Funcao
-Funcao "0..*" -- "0..*" Pastoral
+Funcao "0..*" --> "1" Pastoral : pertence a
 
 Pastoral "1" --> "0..1" ConfiguracaoEscalonamento
 Pastoral "1" --> "0..*" ConvocacaoReforco : onda de
@@ -131,7 +191,7 @@ Missa "1" --> "0..*" Escala
 Membro "0..1" --> "0..*" Escala
 Funcao "1" --> "0..*" Escala
 
-MissaRecorrente "1" --> "0..*" Missa : gera
+MissaRecorrente "0..1" --> "0..*" Missa : gera
 
 Pastoral "1" --> "0..*" FormularioDisponibilidade
 FormularioDisponibilidade "1" --> "0..*" Disponibilidade
@@ -149,6 +209,7 @@ UsuarioPerfil "0..*" --> "0..1" Pastoral : escopo (se Admin Pastoral)
 Missa --> TipoMissa
 MissaRecorrente --> TipoMissa
 Funcao --> TipoMissa
+Funcao --> Complexidade
 UsuarioPerfil --> Perfil
 ConvocacaoReforco --> StatusConvocacao
 
