@@ -1,4 +1,4 @@
-package com.paroquia.domain;
+package com.paroquia.model.enums;
 
 public enum TipoMissa {
     COMUM,
